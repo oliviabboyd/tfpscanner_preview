@@ -137,7 +137,7 @@ tfpscan <- function(tre
       
       root_tre <- data.frame(sequence_name = root_on_tip
                           , sample_time = root_on_tip_sample_time
-                          , sample_date = as.Date( lubridate::date_decimal( root_on_tip_sample_time ) ))
+                          , sample_date = as.Date( date_decimal( root_on_tip_sample_time ) ))
       
       root_tre[setdiff(names(amd), names(root_tre))] <- NA
       amd <- rbind(amd, root_tre)
@@ -665,7 +665,7 @@ tfpscan <- function(tre
     registerDoMPI( mpiclust )
     foreach(u=nodes
             , .combine = rbind
-            , .packages=c('lubridate', 'glue', 'mgcv', 'ggplot2', 'ggtree', 'phangorn')
+            , .packages=c('ape', 'lubridate', 'glue', 'mgcv', 'ggplot2', 'ggtree', 'phangorn')
             , .export=c('output_dir')
             , .errorhandling='remove'
             , .verbose=TRUE
@@ -709,6 +709,8 @@ tfpscan <- function(tre
 
 
 #' Run a fast treedater/mlesky analysis for a given node in the scanner output
+#' @param u Node number selected from scanner output for further treedater/mlesky analysis
+#' @param scanner_env Scanner environment from a scanner output, denoted as "scanner-env-YYYY-MM-DD.rds"
 #'
 #' @export 
 get_clusternode_mlesky <- function( u=406318 , scanner_env=readRDS("scanner-env-2021-03-03.rds")) 
