@@ -167,18 +167,27 @@ options include outputting tree figures and geo figures within the
 `tfpscan_report()` function for a selected node, rather than all nodes
 within a tree in the `tfpscan()` function.
 
-## To DO
+###### To DO TODAY
 
   - [x] README for git package draft
-  - [ ] Repo for results figures, stored trees/outputs on google drive
-  - [ ] Add clock figure to final package
-  - [ ] Add geo figure to final package
-  - [ ] Add cluster\_muts speed up to final package
+  - [ ] Repo for paper results figures, paper RMD
+  - [ ] Organise stored trees/outputs on google drive for easy access
+  - [ ] Add node clock figure to final package  
+  - [ ] Add node geo figure to final package  
+  - [ ] Add node cluster\_muts speed up to final package and cluster
+    node match error fix
   - [ ] Add tfps\_report() function to final package
+  - [x] Add metadata NA fix and root in tree fix
+  - [ ] Add fix for CSV outputs for lineage, co-circulating, regional,
+    mutations
+
+###### To do after
+
+  - [ ] Vignettes for tfpscan() generic usage
+  - [ ] Vignettes for covariate in tfpscan()
+  - [ ] Vignettes for get\_mlesky\_node() usage
+  - [ ] Vignettes for tfpscan\_report()  
+  - [ ] Vignettes for treeview()  
+  - [ ] Final README draft
   - [ ] Adjusting for travel? Mention to erik in meeting
   - [ ] Defining mutations figure (whole tree or node specific?)
-  - [ ] Vignettes for tfpscan() generic usage
-  - [ ] Vignettes for get\_mlesky\_node() usage
-  - [ ] Vignettes for tfpscan\_report()
-  - [ ] Vignettes for treeview()
-  - [ ] Final README draft
