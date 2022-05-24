@@ -177,9 +177,12 @@ within a tree in the `tfpscan()` function.
   - [ ] Add node cluster\_muts speed up to final package and cluster
     node match error fix
   - [ ] Add tfps\_report() function to final package
+  - [ ] Detailed output update to include geo/tree/other fig if included
+    in run
   - [x] Add metadata NA fix and root in tree fix
   - [ ] Add fix for CSV outputs for lineage, co-circulating, regional,
     mutations
+  - [ ] Data.table update to script
 
 ###### To do after
 

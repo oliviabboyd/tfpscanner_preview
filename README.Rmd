@@ -124,8 +124,10 @@ See the vignettes in the R package for examples of how to use `tfpscan()`, `tree
 - [ ] Add node geo figure to final package  
 - [ ] Add node cluster_muts speed up to final package and cluster node match error fix 
 - [ ] Add tfps_report() function to final package 
+- [ ] Detailed output update to include geo/tree/other fig if included in run
 - [x] Add metadata NA fix and root in tree fix
 - [ ] Add fix for CSV outputs for lineage, co-circulating, regional, mutations
+- [ ] Data.table update to script
 
 ###### To do after 
 
