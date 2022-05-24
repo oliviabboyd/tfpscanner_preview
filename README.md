@@ -166,3 +166,19 @@ computational expensive and not recommended unless required. Alternative
 options include outputting tree figures and geo figures within the
 `tfpscan_report()` function for a selected node, rather than all nodes
 within a tree in the `tfpscan()` function.
+
+## To DO
+
+  - [x] README for git package draft
+  - [ ] Repo for results figures, stored trees/outputs on google drive
+  - [ ] Add clock figure to final package
+  - [ ] Add geo figure to final package
+  - [ ] Add cluster\_muts speed up to final package
+  - [ ] Add tfps\_report() function to final package
+  - [ ] Adjusting for travel? Mention to erik in meeting
+  - [ ] Defining mutations figure (whole tree or node specific?)
+  - [ ] Vignettes for tfpscan() generic usage
+  - [ ] Vignettes for get\_mlesky\_node() usage
+  - [ ] Vignettes for tfpscan\_report()
+  - [ ] Vignettes for treeview()
+  - [ ] Final README draft
