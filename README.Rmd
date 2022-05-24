@@ -15,10 +15,12 @@ set.seed(0)
 
 ```
 
-# tfpscanner : Transmission fitness polymorphism scanner
+# Transmission fitness polymorphism scanner
 
 
-This package provides an analytical pipeline for rapid variant scanning based on integration of scalable phylogenetic analysis with non-genetic epidemiological data streams. The scanner computes a test statistic for every possible bipartition of the provided phylogeny to identify relative growth rates and relative evolutionary rates of clades with the phylogeny. For every clade in a partitioned tree, matched comparison clades are selected based on time (and if specified, space), for further statistical analyses. 
+This package provides an analytical pipeline for rapid variant scanning based on integration of scalable phylogenetic analysis with non-genetic epidemiological data streams. The scanning tool, `tfpscan()`, computes a test statistic for every possible bipartition of the provided phylogeny to identify relative growth rates and relative evolutionary rates of clades with the phylogeny. For every clade in a partitioned tree, matched comparison clades are selected based on time (and if specified, space), for further statistical analyses. 
+
+## tfpscanner analyses
 
 The main analyses conducted for each clade, or node with included descendants, are as follows:
 
@@ -26,35 +28,52 @@ The main analyses conducted for each clade, or node with included descendants, a
 * Simple logisitic growth rate estimate
 * Generalised additive model (GAM) combined with a Gaussian process model to estimate growth over time
 
+###### Optional analyses
+
 Additional options in the scanning tool may be specified, including:
 
 * (GAM) combined wtih a model of spatial correlation between neighbouring regions to estimate frequency of a clade over time and space
 * Other covariate analyses, specified by the user, to run a conditional logistic regression on a specified covariate of interest
 * Identification of cluster defining mutations, identified as mutations present in > x% of sequences in the specified cluster and less than x% of sequences in the comparison sample
-* MLEsky analyses to estime effective population size (Ne) over time
+* MLEsky analyses to estime effective population size (Ne) over time, using `get_mlesky_node()` function
 
-The output from the scanning tool includes a new output directory, specified as `"tfpscan-{Sys.Date()}"`, along with a rds file containing output descriptives (size, lineage, sample date) and statistics (clock outlier, logistic growth rate, GAM) for every node included and a rds file containing the environment from the scanning tool run. For each node, logistic growth rate p-values as well as suport for logistic model vs. GAM are also reported. 
+## tfpscanner outputs
 
-Within the output directory, the scanning tool creates a further folder directory for each node included in analyses. Node speicifc outputs within individual node directories include seperate csv files with the following: 
+The output from the scanning tool includes a new output directory will be created called `"tfpscan-{Sys.Date()}"`, unless otherwise specified, along with a RDS file containing output descriptives (size, lineage, sample date) and statistics (clock outlier, logistic growth rate, GAM) for every node included and a RDS file containing the environment from the scanning tool run. For each node, logistic growth rate p-values as well as suport for logistic model vs. GAM are also reported. 
+
+Within the output directory, the scanning tool creates a further folder directory for each node included in analyses. Node specific outputs within individual node directories include seperate CSV files with the following: 
 
 * Summary statistics (clock outlier, logstic growth rate, GAM logistic growth rate, support values)
-* Sequences with specific sample times, region, and further descriptors reported if included (lineage, mutations, covariate)
+* Sequences with specific sample times, region, and further descriptors reported if included (lineage, mutations, covariates)
 * Regional composition of sequences within individual nodes 
 * Lineage composition of sequences within individual nodes
 * Co-circulating lineage composition from comparison matched sample nodes
 
-Additional options for node specific outputs may be specified, including: 
+###### Optional outputs
+
+Additional options for node specific output directories may be specified, including: 
 
 * GAM figure over time, plotting the logistics odds of a sequences being from the specified node
 * Map of GAM + neighbour joining model over space and time (in epi weeks)
 * Tree figure for the node of interest, colored by lineage 
 * CSV file with defining mutations for cluster of interest specified
-* Online tree viewer for the whole phylogeny with linked hover function for statistics associated with each node
+
+These outputs are computational expensive, substantially increasing time and space required, so are recommened for running only as required within the main `tfpscan()` run. These options can alternatively be specified with the `tfpscan_report()` function, for a single node of interest. The `tfpscan_report()` function outputs a summary report for a selected node, including primary outputs for a node of interest, as well as specified additional outputs and mlesky analyses if specified in the function options. 
 
 
+###### Online tree viewer
+
+The tfpscanner package additional offers an optional online tree viewer for the whole phylogeny with linked hover function for statistics associated with each node, using the function `treeview()`. A user may specify particular mutations or lineages of interest for the tree. Mutations will be illustrated wtih a heatmap; lineages will be used to subdivide outputs in scatter plots.  An example tree can be viewed at the link below, where mutations specified include S:A222V, S:N:Q9L, and S:E484K, and lineages specified include a selection of Delta lineages (AY.9, AY.43, AY.4.2). 
+
+https://www.biorxiv.org/content/10.1101/2021.01.18.427056v1.full
+
+
+## Methodology
 
 For a complete description of the statistical methodology underpinning this package, see our preprint:
-https://www.biorxiv.org/content/10.1101/2021.01.18.427056v1.full
+
+`preprint-link`
+
 
 ## Installation
 
@@ -63,13 +82,34 @@ In R, install the `devtools` package and run
 devtools::install_github('mrc-ide/tfpscanner')
 ```
 
-## Documentation
+## Input requirements
 
-### Required
+###### Phylogeny
+
+To run the scanning tool, the user requires a phylogeny, in ape::phylo or treeio::treedata format, and associated metadata. If the phylogeny is not rooted, the user must provide an outgroup to root on wtih paramter `root_on_tip`, and outgroop sample time with paramter `root_on_tip_sample_time`. 
+
+###### Metadata
+
+The associated metadata should be provided in CSV format, with at minimum `sequence_name`, `sample_date` (date format), and `region` included for each sample (if `NA` for any of the three variables, sample with `NA` values will be excluded from further analyses). Optional metadata variables include `sample_time` (numeric format), `mutations`, and other `covariates` of interest (e.g. `age_group` or `vaccine_status`). 
 
 
+###### Additional covariates 
 
-### 
+If additional covariates are included, a character vector for all variable names must be specified as paramter `test_cluster_odds`, and a vector of same length as character vector to `test_cluster_odds_value`. For example if vaccine_status, with values `c("yes", "no") was included as a covariate, the user would specify in the scanner tool as follows: 
 
-See the vignettes in the R package for examples of how to use treeviewer() and get_mlesky_node() functions. 
+```
+tfpscan(..., 
+        test_cluster_odds = c(vaccine_status),
+        test_cluster_odds_value = c(1,0),
+        ...
+        )
+```
+If no values are provided to `test_cluster_odds_value`, the covariate is assumes to be continuous (e.g. `age`). For each included covariate, the odds of a sample belonging to each cluster given this variable will be estimated using conditional logistic regression and adjusting for time. 
+
+
+## Documentation 
+
+See the vignettes in the R package for examples of how to use `tfpscan()`, `treeview()`, `tfpscan_report()`, and `get_mlesky_node()` functions. An example phylogeny, `"tree_2021-12-30.nwk"`, and linked metadata, `"amd_2021-12-30.nwk"`, are provided for the user to trial the scanning tool functions and outputs prior to running on their own phylogeny and metdata. A further covariate example is included with `vaccine_breakthrough` and `age_group`. 
+
+**N.B.** The more options are included in `tfpscan()`, the more computational power and time is required to run the scanner tool. In particlar, outputting tree figures and geo figures for every node is computational expensive and not recommended unless required. Alternative options include outputting tree figures and geo figures within the `tfpscan_report()` function for a selected node, rather than all nodes within a tree in the `tfpscan()` function.
 
