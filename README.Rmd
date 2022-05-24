@@ -1,7 +1,5 @@
 ---
-
 output: github_document
-
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -20,7 +18,9 @@ set.seed(0)
 # tfpscanner : Transmission fitness polymorphism scanner
 
 
-This package provides an analytical pipeline for rapid variant scanning based on integration of scalable phylogenetic analysis with non-genetic epidemiological data streams. The scanner computes a test statistic for every possible bipartition of the provided phylogeny to identify relative growth rates and relative evolutionary rates of clades with the phylogeny. For every clade in a partitioned tree, matched comparison clades are selected based on time (and if specified, space), for further statistical analyses. The main analyses conducted for each clade, or node with included descendants, are as follows:
+This package provides an analytical pipeline for rapid variant scanning based on integration of scalable phylogenetic analysis with non-genetic epidemiological data streams. The scanner computes a test statistic for every possible bipartition of the provided phylogeny to identify relative growth rates and relative evolutionary rates of clades with the phylogeny. For every clade in a partitioned tree, matched comparison clades are selected based on time (and if specified, space), for further statistical analyses. 
+
+The main analyses conducted for each clade, or node with included descendants, are as follows:
 
 * Molecular clock outlier statistic using root to tip regression 
 * Simple logisitic growth rate estimate
@@ -33,7 +33,7 @@ Additional options in the scanning tool may be specified, including:
 * Identification of cluster defining mutations, identified as mutations present in > x% of sequences in the specified cluster and less than x% of sequences in the comparison sample
 * MLEsky analyses to estime effective population size (Ne) over time
 
-The output from the scanning tool includes a new output directory, specified as `"tfpscan-{Sys.Date()}"`, along with a rds file containing output descriptives (size, lineage, sample_dates) and statistics (clock outlier, logistic growth rate, GAM) for every node included and a rds file containing the environment from the scanning tool run. For each node, logistic growth rate p-values as well as suport for logistic model vs. GAM are also reported. 
+The output from the scanning tool includes a new output directory, specified as `"tfpscan-{Sys.Date()}"`, along with a rds file containing output descriptives (size, lineage, sample date) and statistics (clock outlier, logistic growth rate, GAM) for every node included and a rds file containing the environment from the scanning tool run. For each node, logistic growth rate p-values as well as suport for logistic model vs. GAM are also reported. 
 
 Within the output directory, the scanning tool creates a further folder directory for each node included in analyses. Node speicifc outputs within individual node directories include seperate csv files with the following: 
 
