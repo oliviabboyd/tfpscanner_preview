@@ -23,9 +23,11 @@
 #' @param mutation_cluster_frequency_threshold If mutation is detected with more than this frequency within a cluster it may be called as a defining mutation
 #' @param test_cluster_odds A character vector of variable names in \code{amd}. The odds of a sample belonging to each cluster given this variable will be estimated using conditional logistic regression and adjusting for time. 
 #' @param test_cluster_odds_values Vector of same length as \code{test_cluster_odds}. This variable will be dichotomised by testing for equality of the variable with this value (e.g. vaccine_breakthrough == 'yes'). If NULL, the variable is assumed to be continuous (e.g. patient_age). 
-#' @param root_on_tip If input tree is not rooted, will root on this tip, must be included in tre and amd
-#' @param root_on_tip_sample_time Numeric time that tip was sampled
+#' @param root_on_tip If input tree is not rooted, will root on this tip, must be included in tre 
+#' @param root_on_tip_sample_time Numeric time that root on tip was sampled
 #' @param detailed_output If TRUE will provide detailed figures for each cluster 
+#' @param compute_gam If TRUE will compute GAM logistic regression and compare support to simple logistic regression
+#' @param compute_geo If TRUE will compute GAM + neighborhood joining model estimates for each cluster
 #' @param compute_cluster_muts If TRUE will provide defining mutations for each cluster
 #' @param compute_cluster_tree If TRUE Will provide tree figure for each cluster
 #' @return Invisibly returns a data frame with cluster statistics. 
@@ -50,13 +52,15 @@ tfpscan <- function(tre
                     , root_on_tip = 'Wuhan/WH04/2020'
                     , root_on_tip_sample_time = 2020 
                     , detailed_output = FALSE 
-                    , compute_gam = FALSE
+                    , compute_gam = TRUE
+                    , compute_geo_map = FALSE
                     , compute_cluster_muts = FALSE
                     , compute_cluster_tree = FALSE
 )
 {
   message(paste('Starting scan', Sys.time()) , '\n')
   library( ape ) 
+  library( data.table )
   library( lubridate )
   library( glue ) 
   library( mgcv )
@@ -70,21 +74,21 @@ tfpscan <- function(tre
   }
   
   
+  
   if (!dir.exists( output_dir ))
     dir.create( output_dir )
   
   max_time <- Inf 
   if ( !is.null( max_date )){
-    max_time <- decimal_date( max_date )
+    max_time <- decimal_date(ymd( max_date ))
   } else{
     max_date <- Sys.Date()
   }
   
   min_time <- -Inf 
   if (!is.null( min_date ))
-    min_time <- decimal_date( min_date )
+    min_time <- decimal_date( ymd( min_date ))
   
-  # tree data 
   # load algn md 
   
   #verify df character values in correct format
@@ -97,8 +101,9 @@ tfpscan <- function(tre
   amd <- amd[ !is.na( amd$region ) , ]
   
   #verify df date in correct format 
-  amd$sample_date <- as.Date( amd$sample_date )
-  stopifnot( all(tre$tip.label %in% amd$sequence_name) )
+  amd$sample_date <- as.Date( as.character( amd$sample_date ))
+  amd <- amd[amd$sequence_name %in% tre$tip.label,]
+  stopifnot( all(amd$sequence_name %in% tre$tip.label) )
   
   if ( !('sample_time' %in% colnames(amd))){
     amd$sample_time = decimal_date (amd$sample_date)
@@ -112,7 +117,7 @@ tfpscan <- function(tre
     
     amd$lineage <- as.character(amd$lineage)
     
-    }
+  }
   
   if (!('mutations' %in% colnames( amd ))){
     amd$mutations <- 'mutations_not_provided'
@@ -120,15 +125,14 @@ tfpscan <- function(tre
     
     amd$mutations = as.character(amd$mutations)
     
-    }
+  }
   
   # filter by sample time 
   amd <- amd [ (amd$sample_time >= min_time) & (amd$sample_time <= max_time) , ] 
-  sts <- setNames( amd$sample_time, amd$sequence_name )
   
   # retain only required variables 
-  amd <- amd[ , unique( c('sequence_name', 'sample_time', 'sample_date', 'region', 'lineage', 'mutations', test_cluster_odds) ) ] 
-  amd <- amd [ amd$sequence_name %in% tre$tip.label ,  ] 
+  keep_col <- unique( c('sequence_name', 'sample_time', 'sample_date', 'region', 'lineage', 'mutations', test_cluster_odds) )
+  amd <- amd[ , ..keep_col] 
   
   # prune tree
   if ( !is.rooted( tre ) ){
@@ -136,16 +140,15 @@ tfpscan <- function(tre
       stopifnot( root_on_tip %in% tre$tip.label )
       
       root_tre <- data.frame(sequence_name = root_on_tip
-                          , sample_time = root_on_tip_sample_time
-                          , sample_date = as.Date( date_decimal( root_on_tip_sample_time ) ))
+                             , sample_time = root_on_tip_sample_time
+                             , sample_date = as.Date( date_decimal( root_on_tip_sample_time ) ))
       
       root_tre[setdiff(names(amd), names(root_tre))] <- NA
       amd <- rbind(amd, root_tre)
       rm(root_tre)
-    
+      
     }
   }
-  
   
   tre <- keep.tip( tre, intersect( tre$tip.label , amd$sequence_name )  )
   tr2 = tre 
@@ -231,21 +234,22 @@ tfpscan <- function(tre
     st1 <- Sys.time()
     
     ## vector samp time desc 
-    descsts = NULL #deprecate 
+    #descsts = NULL #deprecate 
     
   }
+  
   
   message(paste('Derived lookup variables', Sys.time()) ) 
   
   .get_comparator_ancestor <- function(u, num_comparison = num_ancestor_comparison)
   {
     nu = ndesc[u] 
-    asu = ancestors[[u]]
+    asu = rev(ancestors[[u]])
     na = -1
-    for ( a in asu ){
+    for ( a in asu  ){
       na = ndesc[a]
       nc = na - nu 
-      if ( nc >= num_comparison )
+      if ( nc >= num_comparison)
       {
         break 
       }
@@ -258,6 +262,7 @@ tfpscan <- function(tre
     }
     a
   }
+  
   
   # matched by time and in proportion to region prevalence
   .get_comparator_sample <- function( u , nX = factor_geo_comparison ) 
@@ -441,16 +446,16 @@ tfpscan <- function(tre
   .cluster_muts <- function(u,a = NULL, mut_variable = 'mutations') 
   {
     tu = descendantSids[[u]]
-    mdf.u = amd[ amd$sequence_name %in% tu, ]
+    mdf.u = amd[ sequence_name %in% tu,list( mutations ) ]
     ## find comparator ancestor 
     if ( is.null(a))
       a = .get_comparator_ancestor(u)
     asids = setdiff( descendantSids[[a]] ,  descendantSids[[u]] )
-    mdf.a = amd[ amd$sequence_name %in% asids , ]
+    mdf.a = amd[ sequence_name %in% asids , list(mutations)]
     if ( nrow( mdf.a ) == 0  |  nrow( mdf.u ) == 0 )
       return( list(defining = NA, all = NA ) )
-    vtabu = sort( table( do.call( c, strsplit( mdf.u[[mut_variable]], split='\\|' )  ) ) / nrow( mdf.u ) )
-    vtaba = sort( table( do.call( c, strsplit( mdf.a[[mut_variable]], split='\\|' )  ) ) / nrow( mdf.a ) )
+    vtabu = sort( table( do.call( c, strsplit( mdf.u[,mutations], split='\\|' )  ) ) / nrow( mdf.u ) )
+    vtaba = sort( table( do.call( c, strsplit( mdf.a[,mutations], split='\\|' )  ) ) / nrow( mdf.a ) )
     
     umuts = names( vtabu[ vtabu > mutation_cluster_frequency_threshold ] )
     defining_muts = setdiff( names( vtabu[ vtabu > mutation_cluster_frequency_threshold ] )
@@ -471,7 +476,8 @@ tfpscan <- function(tre
     }
     y <- y [ 1:min(nrow(y),maxrows) , ]
     y$Frequency <- paste0( round(y$Frequency*100), '%' )
-    paste( knitr::kable(y, 'simple') , collapse = '\n' ) # convert to string
+    
+    list(y, paste( knitr::kable(y, 'simple') , collapse = '\n' )) # convert to string
   }
   
   .region_summary <- function(tips, maxrows = 5){
@@ -487,7 +493,8 @@ tfpscan <- function(tre
     }
     y <- y [ 1:min(nrow(y),maxrows) , ]
     y$Frequency <- paste0( round(y$Frequency*100), '%' )
-    paste( knitr::kable(y, 'simple') , collapse = '\n' ) # convert to string
+    
+    list(y, paste( knitr::kable(y, 'simple') , collapse = '\n' )) # convert to string
   }
   
   .cluster_tree <- function(tips) # tr2, amd
@@ -499,7 +506,7 @@ tfpscan <- function(tre
     gtr = ggtree(tr) 
     mutlist = strsplit( amd[ match( tips, amd$sequence_name ), ]$mutations, split = '\\|' )
     #~ sharedmut = Reduce( intersect,  mutlist )
-    mutthresh = .75 
+    mutthresh = mutation_cluster_frequency_threshold #changed from .75
     tx = table( do.call( c, mutlist ))
     tx <- tx / Ntip(tr)
     sharedmut <- names(tx)[tx>= mutthresh ] #TODO need a better way to get sharedmut
@@ -594,9 +601,9 @@ tfpscan <- function(tre
                     , simple_logistic_model_support = lgs$relative_model_support[ 'Logistic' ] 
                     , clock_outlier = .clock_outlier_stat(u, a )
                     , lineage = paste( names(sort(table(ulins),decreasing=TRUE)) , collapse = '|' )
-                    , lineage_summary = lineage_summary 
-                    , cocirc_lineage_summary = cocirc_summary
-                    , region_summary = reg_summary 
+                    , lineage_summary = lineage_summary[[2]] 
+                    , cocirc_lineage_summary = cocirc_summary[[2]]
+                    , region_summary = reg_summary[[2]] 
                     , external_cluster = !(u %in% node_ancestors ) 
                     , tips = paste( tu, collapse = '|' )
                     , defining_mutations = paste(cmut$defining , collapse = '|' )
@@ -619,7 +626,9 @@ tfpscan <- function(tre
       cldir = glue( '{output_dir}/{as.character(u)}'  ) 
       dir.create( cldir  , showWarnings=FALSE)
       # summary stat data 
-      write.csv( data.frame( statistic = t(X[1 , c('logistic_growth_rate', 'simple_logistic_growth_rate', 'logistic_growth_rate_p', 'gam_logistic_growth_rate', 'simple_logistic_model_support', 'clock_outlier') ] ) ) , file =  glue( '{cldir}/summary.csv' ) )
+      write.csv( data.frame( statistic = t(X[1 , c('logistic_growth_rate', 'simple_logistic_growth_rate',
+                                                   'logistic_growth_rate_p', 'gam_logistic_growth_rate',
+                                                   'simple_logistic_model_support', 'clock_outlier') ] ) ) , file =  glue( '{cldir}/summary.csv' ) )
       # freq plot 
       if ( !is.null( lgs$plot )){
         suppressMessages( ggsave( lgs$plot, file =  glue( '{cldir}/frequency.pdf' )) )
@@ -643,11 +652,11 @@ tfpscan <- function(tre
       # tip table 
       write.csv( amd[ amd$sequence_name %in% tu, ], file = glue( '{cldir}/sequences.csv' ))
       # reg summary
-      write.csv( reg_summary, file = glue( '{cldir}/regional_composition.csv' ))
+      write.csv( reg_summary[[1]], file = glue( '{cldir}/regional_composition.csv' ))
       # lineage summary 
-      write.csv( lineage_summary, file = glue( '{cldir}/lineage_composition.csv' ))
+      write.csv( lineage_summary[[1]], file = glue( '{cldir}/lineage_composition.csv' ))
       # cocirc lineage summary 
-      write.csv( cocirc_summary, file = glue( '{cldir}/cocirculating_lineages.csv' ))
+      write.csv( cocirc_summary[[1]], file = glue( '{cldir}/cocirculating_lineages.csv' ))
     }
     X
   }
@@ -665,7 +674,7 @@ tfpscan <- function(tre
     registerDoMPI( mpiclust )
     foreach(u=nodes
             , .combine = rbind
-            , .packages=c('ape', 'lubridate', 'glue', 'mgcv', 'ggplot2', 'ggtree', 'phangorn')
+            , .packages=c('ape', 'data.table', 'lubridate', 'glue', 'mgcv', 'ggplot2', 'ggtree', 'phangorn')
             , .export=c('output_dir')
             , .errorhandling='remove'
             , .verbose=TRUE
