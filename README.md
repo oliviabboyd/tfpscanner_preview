@@ -167,24 +167,25 @@ options include outputting tree figures and geo figures within the
 `tfpscan_report()` function for a selected node, rather than all nodes
 within a tree in the `tfpscan()` function.
 
-###### To DO TODAY
+###### Priority
 
   - [x] README for git package draft
-  - [ ] Repo for paper results figures, paper RMD
+  - [x] Repo for paper results figures, paper RMD
+  - [x] GAM speed testing: bs or cs highest speed, cs smoother figures
   - [ ] Organise stored trees/outputs on google drive for easy access
-  - [ ] Add node clock figure to final package  
-  - [ ] Add node geo figure to final package  
-  - [ ] Add node cluster\_muts speed up to final package and cluster
+  - [x] Add node clock figure to final package  
+  - [x] Add node geo figure to final package  
+  - [x] Add node cluster\_muts speed up to final package and cluster
     node match error fix
   - [ ] Add tfps\_report() function to final package
   - [ ] Detailed output update to include geo/tree/other fig if included
     in run
   - [x] Add metadata NA fix and root in tree fix
-  - [ ] Add fix for CSV outputs for lineage, co-circulating, regional,
+  - [x] Add fix for CSV outputs for lineage, co-circulating, regional,
     mutations
-  - [ ] Data.table update to script
+  - [x] Data.table update to script finalised
 
-###### To do after
+###### Final updates
 
   - [ ] Vignettes for tfpscan() generic usage
   - [ ] Vignettes for covariate in tfpscan()
