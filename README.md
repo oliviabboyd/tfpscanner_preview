@@ -177,13 +177,14 @@ within a tree in the `tfpscan()` function.
   - [x] Add node geo figure to final package  
   - [x] Add node cluster\_muts speed up to final package and cluster
     node match error fix
-  - [ ] Add tfps\_report() function to final package
+  - [x] Add tfps\_report() function to final package
   - [ ] Detailed output update to include geo/tree/other fig if included
     in run
   - [x] Add metadata NA fix and root in tree fix
   - [x] Add fix for CSV outputs for lineage, co-circulating, regional,
     mutations
   - [x] Data.table update to script finalised
+  - [ ] Defining mutations figure (whole tree or node specific?)
 
 ###### Final updates
 
@@ -193,5 +194,3 @@ within a tree in the `tfpscan()` function.
   - [ ] Vignettes for tfpscan\_report()  
   - [ ] Vignettes for treeview()  
   - [ ] Final README draft
-  - [ ] Adjusting for travel? Mention to erik in meeting
-  - [ ] Defining mutations figure (whole tree or node specific?)
