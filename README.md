@@ -178,19 +178,19 @@ within a tree in the `tfpscan()` function.
   - [x] Add node cluster\_muts speed up to final package and cluster
     node match error fix
   - [x] Add tfps\_report() function to final package
-  - [ ] Detailed output update to include geo/tree/other fig if included
+  - [x] Detailed output update to include geo/tree/other fig if included
     in run
   - [x] Add metadata NA fix and root in tree fix
   - [x] Add fix for CSV outputs for lineage, co-circulating, regional,
     mutations
   - [x] Data.table update to script finalised
-  - [ ] Defining mutations figure (whole tree or node specific?)
+  - [x] Defining mutations figure (node specific)
 
 ###### Final updates
 
-  - [ ] Vignettes for tfpscan() generic usage
+  - [x] Vignettes for tfpscan() generic usage
   - [ ] Vignettes for covariate in tfpscan()
-  - [ ] Vignettes for get\_mlesky\_node() usage
-  - [ ] Vignettes for tfpscan\_report()  
-  - [ ] Vignettes for treeview()  
+  - [x] Vignettes for get\_mlesky\_node() usage
+  - [x] Vignettes for tfpscan\_report()  
+  - [x] Vignettes for treeview()  
   - [ ] Final README draft
